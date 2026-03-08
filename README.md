@@ -28,4 +28,4 @@ El proyecto está dividido en módulos independientes. Cada integrante debe trab
 
 1. **Nunca** hacer commits directos a la rama `main`.
 2. Todo desarrollo nuevo debe hacerse en una rama derivada (ej. `feature/nombre-de-la-tarea`).
-3. Al terminar la tarea, abrir un Pull Request (PR) para revisión del Líder Técnico antes de integrar.
+3. Al terminar la tarea, abrir un Pull Request (PR) para revisión del Product Owner y/o Líder Técnico antes de integrar.
