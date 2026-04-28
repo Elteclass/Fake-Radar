@@ -46,33 +46,45 @@ async def analyze_news(request: AnalyzeRequest):
     
     # Se construye el prompt para gemini, incluyendo el texto de la noticia y las instrucciones claras para el JSON valido
     prompt = f"""
-        Eres un experto en detección de desinformación y fact-checking periodístico.
+    Eres un sistema experto en detección de desinformación y fact-checking periodístico.
+    Tu tono es objetivo, frío y analítico. No emitas opiniones personales.
 
-        Analiza la siguiente noticia y responde ÚNICAMENTE con un objeto JSON válido, sin texto adicional, sin bloques de código markdown.
+    Analiza la siguiente noticia utilizando los resultados de búsqueda web que tienes disponibles:
 
-        NOTICIA:
-        {request.text}
+    {request.text}
 
-        INSTRUCCIONES:
-        - global_assessment debe ser exactamente uno de: "Verdadero", "Dudoso", "Falso"
-        - verdict debe ser exactamente uno de: "Verificado", "Falso", "Engañoso", "Requiere verificación", "No verificable"
-        - reasoning debe explicar: qué afirmaciones concretas hace la noticia, qué evidencia existe a favor o en contra, y por qué se asignó ese veredicto
-        - references debe incluir fuentes reales y relevantes que respalden el análisis (mínimo 1, máximo 5)
-        - Si no encuentras fuentes confiables, usa una lista vacía en references
+    INSTRUCCIONES OBLIGATORIAS:
+    - Debes usar los resultados de la búsqueda web proporcionada para contrastar y verificar la noticia.
+    - Devuelve la respuesta en formato JSON sin ningún marcador Markdown como ```json.
+    - NO incluyas texto antes ni después del JSON.
+    - NO uses markdown, bloques de código ni ningún otro formato.
+    - El campo "references" debe contener únicamente los enlaces reales que consultaste durante la búsqueda web, no inventes URLs.
+    - Si no encuentras fuentes reales, devuelve "references" como lista vacía [].
+    - Si no puedes cumplir el formato, responde con un JSON válido con valores por defecto.
 
-        ESTRUCTURA JSON REQUERIDA:
-        {{
-        "global_assessment": "<valor>",
-        "fact_check_analysis": {{
-            "engine": "Gemini API",
-            "verdict": "<valor>",
-            "reasoning": "<análisis detallado>",
-            "references": [
-            {{"title": "<título de la fuente>", "url": "<url>", "domain": "<dominio>"}}
-            ]
-        }}
-        }}
-        """
+    REGLAS DE VALORES:
+    - global_assessment: "Verdadero" | "Dudoso" | "Falso"
+    - verdict: "Verificado" | "Falso" | "Engañoso" | "Requiere verificación" | "No verificable"
+    - reasoning: resumen de 2-3 líneas explicando por qué tomaste esa decisión, basado en lo que encontraste en la web
+    - references: lista de máximo 5 fuentes reales consultadas durante la búsqueda, o []
+
+    FORMATO OBLIGATORIO (responde SOLO esto, sin ningún texto adicional):
+    {{
+      "global_assessment": "Falso",
+      "fact_check_analysis": {{
+        "engine": "Gemini API + Web Search",
+        "verdict": "Falso",
+        "reasoning": "Explicación basada en los resultados de búsqueda web aquí",
+        "references": [
+          {{
+            "title": "Título de la fuente real consultada",
+            "url": "https://url-real-consultada.com/articulo",
+            "domain": "url-real-consultada.com"
+          }}
+        ]
+      }}
+    }}
+    """
     
     # Se llama a la funcion que se comunica con gemini API
     raw_response = generate_response(prompt)
