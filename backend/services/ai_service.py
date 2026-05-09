@@ -31,7 +31,7 @@ def _extract_json(text: str) -> str:
     return text.strip()
 
 
-def generate_response(prompt):
+def generate_response(prompt, source_url: str | None = None):
     try:
         response = client.models.generate_content(
             model=GEMINI_MODEL,
@@ -53,11 +53,17 @@ def generate_response(prompt):
 
         # Extraer referencias reales desde grounding_metadata
         real_references = []
+        normalized_source_url = None
+        if source_url:
+            normalized_source_url = source_url.strip().rstrip("/")
         try:
             chunks = response.candidates[0].grounding_metadata.grounding_chunks
             for chunk in chunks:
                 web = chunk.web
                 if web and web.uri:
+                    normalized_uri = web.uri.rstrip("/")
+                    if normalized_source_url and normalized_uri == normalized_source_url:
+                        continue
                     from urllib.parse import urlparse
                     domain = urlparse(web.uri).netloc
                     real_references.append({
