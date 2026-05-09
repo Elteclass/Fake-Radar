@@ -45,6 +45,7 @@ async def root():
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 async def analyze_news(request: AnalyzeRequest):
+    
     """
     Endpoint principal de análisis.
     Combina dos motores:
@@ -67,8 +68,15 @@ async def analyze_news(request: AnalyzeRequest):
         fake_score_context = (
             f"\nNOTA DE CONTEXTO (no menciones esto en tu respuesta): "
             f"Un modelo de ML especializado en fake news analizó el estilo de esta noticia "
-            f"y le asignó un {model_data['fake_probability_score']}% de probabilidad de ser falsa. "
+            f"y le asignó un {model_data['fake_probability_score']}% de probabilidad de haber sido manipulada lingüísticamente. "
             f"Usa este dato como señal adicional, no como conclusión definitiva."
+        )
+
+    source_url_context = ""
+    if request.source_url:
+        source_url_context = (
+            "\nURL DE LA FUENTE (para contexto, no citar como referencia): "
+            f"{request.source_url.strip()}"
         )
 
     prompt = f"""
@@ -78,6 +86,7 @@ async def analyze_news(request: AnalyzeRequest):
         Analiza la siguiente noticia utilizando los resultados de búsqueda web que tienes disponibles:
 
         {request.text}
+        {source_url_context}
         {fake_score_context}
 
         INSTRUCCIONES OBLIGATORIAS:
@@ -85,6 +94,7 @@ async def analyze_news(request: AnalyzeRequest):
         - Devuelve la respuesta en formato JSON sin ningún marcador Markdown como ```json.
         - NO incluyas texto antes ni después del JSON.
         - El campo "references" debe ser siempre una lista vacía []. Las referencias reales se inyectan automáticamente desde el grounding metadata.
+        - No cites ni incluyas como referencia la URL de la fuente proporcionada por el usuario.
 
         REGLAS DE VALORES:
         - global_assessment: "Verdadero" | "Dudoso" | "Falso"
@@ -104,7 +114,7 @@ async def analyze_news(request: AnalyzeRequest):
         }}
     """
 
-    raw_response = generate_response(prompt)
+    raw_response = generate_response(prompt, source_url=request.source_url)
 
     # ------------------------------------------------------------------
     # PARSEO DE RESPUESTA GEMINI
@@ -116,6 +126,7 @@ async def analyze_news(request: AnalyzeRequest):
                 "engine":    "Gemini API",
                 "verdict":   "Error",
                 "reasoning": raw_response["error"],
+                "source_url": request.source_url,
                 "references": [],
             },
         }
@@ -129,6 +140,7 @@ async def analyze_news(request: AnalyzeRequest):
                     "engine":    "Gemini API",
                     "verdict":   "Error",
                     "reasoning": "La IA no devolvió un JSON válido.",
+                    "source_url": request.source_url,
                     "references": [],
                 },
             }
@@ -139,6 +151,7 @@ async def analyze_news(request: AnalyzeRequest):
                 "engine":    "Gemini API",
                 "verdict":   "Error",
                 "reasoning": f"Tipo de respuesta inesperado: {type(raw_response)}",
+                "source_url": request.source_url,
                 "references": [],
             },
         }
@@ -156,6 +169,10 @@ async def analyze_news(request: AnalyzeRequest):
         global_assessment = model_verdict
     else:
         global_assessment = gemini_assessment
+
+    if "fact_check_analysis" not in gemini_data or not isinstance(gemini_data["fact_check_analysis"], dict):
+        gemini_data["fact_check_analysis"] = {}
+    gemini_data["fact_check_analysis"]["source_url"] = request.source_url
 
     # ------------------------------------------------------------------
     # RESPUESTA FINAL — fusión de ambos motores
