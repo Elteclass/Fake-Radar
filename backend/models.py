@@ -39,6 +39,8 @@ class Reference(BaseModel):
 
 class FactCheckAnalysis(BaseModel):
     engine: str = "Gemini API + Web Search"
+    # URL proporcionada por el usuario (si existe)
+    source_url: Optional[str] = None
     # El veredicto rápido: Falso, Verdadero, Desinformación
     verdict: str
     # El resumen de 2 líneas de por qué la IA tomó esa decisión
