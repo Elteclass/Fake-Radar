@@ -153,7 +153,7 @@ body {
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 24px;
+  gap: 32px;
   margin-bottom: 32px;
 }
 
@@ -342,7 +342,8 @@ body {
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-radius: 24px;
-  padding: 26px;
+  padding: var(--card-padding);
+  margin-bottom: 32px;
   box-shadow: var(--shadow-soft);
   border: 1px solid var(--border-soft);
 }
@@ -494,13 +495,17 @@ body {
 }
 
 .reference-domain {
-  display: inline-block;
+  display: block;
   margin-bottom: 10px;
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-soft);
+
+  white-space: nowrap;        
+  overflow: hidden;           
+  text-overflow: ellipsis;    
 }
 
 .reference-title {
@@ -515,7 +520,11 @@ body {
   font-size: 13px;
   line-height: 1.5;
   color: var(--text-soft);
-  word-break: break-word;
+  
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .input-section {
