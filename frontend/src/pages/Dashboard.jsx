@@ -44,15 +44,16 @@ export default function Dashboard() {
 ) {
   setData(null);
   setError("ERROR AL ANALIZAR LA NOTICIA. INTENTAR DE NUEVO O ANALIZAR OTRO TEXTO.");
+  setGeminiService("NO DISPONIBLE");
   return;
 }
 
       setData(response);
+      setGeminiService("OK");
         } catch (err) {
       console.error("Error al analizar:", err);
-      setError(
-        "No se pudo conectar con el servidor. Mostrando último análisis disponible."
-      );
+      setError("No se pudo conectar con el servidor. Mostrando último análisis disponible.");
+      setGeminiService("NO DISPONIBLE");
     } finally {
       setLoading(false);
     }
